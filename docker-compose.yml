@@ -23,7 +23,7 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
-      - '--alertmanager.url=http://alertmanager:9093'
+        #      - '--alertmanager.url=http://alertmanager:9093'
     ports:
       - 9090:9090
     links:
@@ -31,6 +31,7 @@ services:
       - cadvisor:cadvisor
       - node-exporter:node-exporter
       - rabbit-exporter:rabbit-exporter
+      - mongo-exporter:mongo-exporter
     networks:
       - prom-monitor-network
     restart: unless-stopped
@@ -118,4 +119,15 @@ services:
     privileged: true
     restart: unless-stopped
 
-    
+  mongo-exporter:
+    image: ssalaues/mongodb-exporter:0.6.1
+    container_name: mongo-exporter
+    ports:
+      - 9216:9216
+    environment:
+      - MONGODB_URI=mongodb://teto:27017
+    networks:
+      - prom-monitor-network
+    restart: unless-stopped
+  
+

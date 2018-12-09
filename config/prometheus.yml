@@ -37,3 +37,7 @@ scrape_configs:
     scrape_interval: 60s
     static_configs:
     - targets: ['rabbitmq-exporter:9419']
+
+  - job_name: 'mongo-monitor'
+    static_configs:
+    - targets: ['mongo-exporter:9216']
