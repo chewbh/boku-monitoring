@@ -21,9 +21,9 @@ services:
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
+      - '--web.external-url=teto:9090'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
-        # - '--alertmanager.url=http://alertmanager1:9093'
     ports:
       - 9090:9090
     links:
@@ -43,13 +43,10 @@ services:
       - 9093:9093
     volumes:
       - ./alertmanager/:/etc/alertmanager/
-    environment:
-      - MAIL_APP_USERNAME=${GMAIL_APP_USERNAME}
-      - MAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
     networks:
       - prom-monitor-network
     command:
-      - '--config.file=/etc/alertmanager/config.yml'
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
       - '--storage.path=/alertmanager'
     restart: unless-stopped
 
@@ -67,12 +64,12 @@ services:
     networks:
       - prom-monitor-network
     restart: unless-stopped
-#    environment:
-#      - GF_SMTP_ENABLED=true
-#      - GF_SMTP_HOST=smtp.gmail.com:587
-#      - GF_SMTP_USER=myadrress@gmail.com
-#      - GF_SMTP_PASSWORD=mypassword
-#      - GF_SMTP_FROM_ADDRESS=myaddress@gmail.com
+    environment:
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=smtp.gmail.com:587
+      - GF_SMTP_USER=${GMAIL_APP_USERNAME}
+      - GF_SMTP_PASSWORD=${GMAIL_APP_PASSWORD}
+      - GF_SMTP_FROM_ADDRESS=src.mail@boonlogic.io
 
   node-exporter:
     image: prom/node-exporter:v0.16.0
