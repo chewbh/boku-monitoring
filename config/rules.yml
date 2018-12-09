@@ -1,0 +1,6 @@
+groups:
+  - name: alert-example
+    rules:
+    - alert: InstanceDown
+      expr: up{job='config-service'} == 0
+      for: 1m

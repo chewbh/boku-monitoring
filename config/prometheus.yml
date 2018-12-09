@@ -2,14 +2,23 @@
 global:
   scrape_interval:     15s # By default, scrape targets every 15 seconds.
   evaluation_interval: 15s # By default, scrape targets every 15 seconds.
-
   # Attach these labels to any time series or alerts when communicating with
   # external systems (federation, remote storage, Alertmanager).
   external_labels:
-    monitor: 'prom-boku'
+    region: ap-southeast-1
+    env: production
+    team: boonlogic
 
+rule_files:
+  - '/etc/prometheus/rules.yml'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+      - targets: ['alertmanager1:9093']
 
 scrape_configs:
+  
   # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
   - job_name: 'node-monitor'
     # Override the global default and scrape targets from this job every 5 seconds.

@@ -1,0 +1,7 @@
+[template]
+src = "alertmanager.yml.tmpl"
+dest = "alertmanager.yml"
+keys = [
+    "/gmail/app/username",
+    "/gmail/app/password",
+]

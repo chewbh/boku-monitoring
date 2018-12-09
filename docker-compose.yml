@@ -23,11 +23,11 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
-        #      - '--alertmanager.url=http://alertmanager:9093'
+        # - '--alertmanager.url=http://alertmanager1:9093'
     ports:
       - 9090:9090
     links:
-      - alertmanager:alertmanager
+      - alertmanager:alertmanager1
       - cadvisor:cadvisor
       - node-exporter:node-exporter
       - rabbit-exporter:rabbit-exporter
@@ -38,10 +38,14 @@ services:
 
   alertmanager:
     image: prom/alertmanager:v0.15.2
+    container_name: metrics-alertmanager
     ports:
       - 9093:9093
     volumes:
       - ./alertmanager/:/etc/alertmanager/
+    environment:
+      - MAIL_APP_USERNAME=${GMAIL_APP_USERNAME}
+      - MAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
     networks:
       - prom-monitor-network
     command:
