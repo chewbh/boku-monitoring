@@ -1,0 +1,121 @@
+version: '3.2'
+
+volumes:
+  prometheus_data: {}
+  grafana_data: {}
+
+networks:
+  prom-monitor-network:
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.3.2
+    container_name: metrics-prometheus
+    depends_on:
+      - cadvisor
+      - node-exporter
+      - rabbit-exporter
+    volumes:
+      - ./config/:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--alertmanager.url=http://alertmanager:9093'
+    ports:
+      - 9090:9090
+    links:
+      - alertmanager:alertmanager
+      - cadvisor:cadvisor
+      - node-exporter:node-exporter
+      - rabbit-exporter:rabbit-exporter
+    networks:
+      - prom-monitor-network
+    restart: unless-stopped
+
+  alertmanager:
+    image: prom/alertmanager:v0.15.2
+    ports:
+      - 9093:9093
+    volumes:
+      - ./alertmanager/:/etc/alertmanager/
+    networks:
+      - prom-monitor-network
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:5.2.3
+    container_name: metrics-ui
+    # user: "104"
+    depends_on:
+      - prometheus
+    ports:
+      - 3000:3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+        #  - ./grafana/provisioning/:/etc/grafana/provisioning/
+    networks:
+      - prom-monitor-network
+    restart: unless-stopped
+#    environment:
+#      - GF_SMTP_ENABLED=true
+#      - GF_SMTP_HOST=smtp.gmail.com:587
+#      - GF_SMTP_USER=myadrress@gmail.com
+#      - GF_SMTP_PASSWORD=mypassword
+#      - GF_SMTP_FROM_ADDRESS=myaddress@gmail.com
+
+  node-exporter:
+    image: prom/node-exporter:v0.16.0
+    container_name: metrics-node-agent
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - --collector.filesystem.ignored-mount-points
+      - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+    ports:
+      - 9100:9100
+    networks:
+      - prom-monitor-network
+    restart: unless-stopped
+
+  rabbit-exporter:
+    image: kbudde/rabbitmq-exporter:v1.0
+    container_name: rabbitmq-exporter
+    ports:
+      - 9419:9419
+    environment:
+      - RABBIT_CAPABILITIES=bert,no_sort
+      - PUBLISH_PORT=9419
+      - RABBIT_URL=http://teto:15672
+      - RABBIT_USER=appusr
+      - RABBIT_PASSWORD=password
+    networks:
+      - prom-monitor-network
+    restart: unless-stopped
+
+  cadvisor:
+    image: google/cadvisor:v0.32.0
+    container_name: cadvisor
+    ports:
+      - 8881:8080
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /cgroup:/cgroup:ro
+    networks:
+      - prom-monitor-network
+    privileged: true
+    restart: unless-stopped
+
+    
